@@ -14,7 +14,7 @@ let server: Server;
     await mongoose.connect(config.db_connection_uri as string);
 
     server = app.listen(config.port, () => {
-      console.log(colors.green.bold(`App listening on port : ${config.port}`));
+      console.log(colors.green.bold(`App listening on port ▶️ ${config.port}`));
     });
   } catch (error: any) {
     console.log(colors.red(error));
