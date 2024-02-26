@@ -5,17 +5,7 @@ import User from '../user/user.model';
 
 // register user
 const registerUser = async (payload: TUser) => {
-  const { email, mobileNumber, nidNumber } = payload;
-  /* 
-1. check already have a user with email
-2. check already have a user with mobile number
-3. check already have a user with nid number
-*/
-  const result = User.create(payload);
-
-  // create user
-
-  return result;
+  const result = await User.findById('sldfsfls');
 };
 
 const AuthService = {

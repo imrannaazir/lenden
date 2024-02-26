@@ -5,6 +5,7 @@ import handleZodValidationError from '../errors/handleZodValidationError';
 import config from '../config';
 import handleMongooseValidationError from '../errors/handleMongooseValidationError';
 import handleDuplicateKeyError from '../errors/handleDuplicateKeyError';
+import handleCastError from '../errors/handleCastError';
 
 const globalErrorHandler: ErrorRequestHandler = (error, req, res, next) => {
   const success = false;
@@ -39,6 +40,14 @@ const globalErrorHandler: ErrorRequestHandler = (error, req, res, next) => {
   // handle duplicate key error
   else if (error.code === 11000) {
     const simplifiedError = handleDuplicateKeyError(error);
+    statusCode = simplifiedError.statusCode;
+    message = simplifiedError.message;
+    errorSources = simplifiedError.errorSources;
+  }
+
+  // handle cast error
+  else if (error.name === 'CastError') {
+    const simplifiedError = handleCastError(error);
     statusCode = simplifiedError.statusCode;
     message = simplifiedError.message;
     errorSources = simplifiedError.errorSources;
