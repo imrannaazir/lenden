@@ -2,8 +2,9 @@ import { StatusCodes } from 'http-status-codes';
 import AppError from '../../errors/AppError';
 import { TUser } from '../user/user.interface';
 import User from '../user/user.model';
-import { createToken } from './auth.utils';
+import { createToken, verifyPin } from './auth.utils';
 import config from '../../config';
+import { TLoginUser } from './auth.interface';
 
 // register user
 const registerUser = async (payload: TUser) => {
@@ -43,8 +44,23 @@ const registerUser = async (payload: TUser) => {
       'Already have an account by this nid number.',
     );
   }
-
-  if (payload.role === 'agent') {
+  if (payload.role === 'admin') {
+    const isAdminExist = await User.findOne({});
+    if (isAdminExist) {
+      throw new AppError(
+        StatusCodes.UNAUTHORIZED,
+        'You are unauthorized to be admin.',
+      );
+    }
+    if (payload.pin !== config.admin_pin) {
+      throw new AppError(
+        StatusCodes.UNAUTHORIZED,
+        'You are unauthorized to be admin.',
+      );
+    }
+    payload.balance = 0;
+    payload.status = 'active';
+  } else if (payload.role === 'agent') {
     payload.status = 'pending';
     payload.balance = 100000;
   } else if (payload.role === 'user') {
@@ -84,8 +100,66 @@ const registerUser = async (payload: TUser) => {
   };
 };
 
+// login user
+const loginUser = async (payload: TLoginUser) => {
+  /* 
+  1. check user is exist
+  2. check password is correct
+  4. generate token
+  */
+  const { mobileNumberOrEmail, pin } = payload;
+
+  const isUserExist = await User.findOne({
+    $or: [
+      { email: mobileNumberOrEmail },
+      { mobileNumber: mobileNumberOrEmail },
+    ],
+  }).select('+pin');
+
+  if (!isUserExist) {
+    throw new AppError(
+      StatusCodes.UNAUTHORIZED,
+      'Email / mobile number is incorrect.',
+    );
+  }
+
+  // compare password
+  const isPinMatched = await verifyPin(pin, isUserExist.pin);
+
+  if (!isPinMatched) {
+    throw new AppError(
+      StatusCodes.UNAUTHORIZED,
+      'You entered the wrong password.',
+    );
+  }
+
+  // create access token
+  const jwtPayload = {
+    mobileNumber: isUserExist.mobileNumber,
+    role: isUserExist.role,
+  };
+  const accessToken = await createToken(
+    jwtPayload,
+    config.access_secret as string,
+    config.access_token_expires_in as string,
+  );
+
+  // create refresh token
+  const refreshToken = await createToken(
+    jwtPayload,
+    config.refresh_secret as string,
+    config.refresh_token_expires_in as string,
+  );
+
+  return {
+    accessToken,
+    refreshToken,
+  };
+};
+
 const AuthService = {
   registerUser,
+  loginUser,
 };
 
 export default AuthService;

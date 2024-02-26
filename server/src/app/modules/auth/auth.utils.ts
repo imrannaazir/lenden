@@ -4,6 +4,7 @@ import AppError from '../../errors/AppError';
 import { StatusCodes } from 'http-status-codes';
 import jwt, { JwtPayload } from 'jsonwebtoken';
 
+// hash pin number
 export const hashPin = async (pin: string) => {
   try {
     return await bcrypt.hash(pin, Number(config.salt_rounds));
@@ -15,6 +16,19 @@ export const hashPin = async (pin: string) => {
   }
 };
 
+//verify pin
+export const verifyPin = async (plainPin: string, hashedPin: string) => {
+  try {
+    return bcrypt.compare(plainPin, hashedPin);
+  } catch (error) {
+    throw new AppError(
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      'Failed to compare pin.',
+    );
+  }
+};
+
+// create token
 export const createToken = async (
   payload: JwtPayload,
   select: string,

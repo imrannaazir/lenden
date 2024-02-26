@@ -4,6 +4,7 @@ import sendResponse from '../../utils/sendResponse';
 import AuthService from './auth.service';
 import config from '../../config';
 
+// register user
 const registerUser = catchAsync(async (req, res) => {
   const payload = req.body;
   const { accessToken, balance, refreshToken } =
@@ -21,7 +22,23 @@ const registerUser = catchAsync(async (req, res) => {
   });
 });
 
+// login user
+const loginUser = catchAsync(async (req, res) => {
+  const payload = req.body;
+  const { accessToken, refreshToken } = await AuthService.loginUser(payload);
+  res.cookie('refreshToken', refreshToken, {
+    secure: config.NODE_ENV === 'development' ? true : false,
+  });
+
+  sendResponse(res, {
+    success: true,
+    statusCode: StatusCodes.OK,
+    message: 'Logged in successfully.',
+    data: { accessToken },
+  });
+});
 const AuthController = {
   registerUser,
+  loginUser,
 };
 export default AuthController;
