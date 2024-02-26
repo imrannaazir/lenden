@@ -55,6 +55,10 @@ const userSchema = new Schema<TUser>(
       type: Number,
       required: true,
     },
+    token: {
+      type: String,
+      select: 0,
+    },
   },
   {
     timestamps: true,
@@ -70,6 +74,7 @@ userSchema.pre('save', async function (next) {
 // discontinue pin
 userSchema.post('save', async function (doc, next) {
   doc.set('pin', undefined);
+  doc.set('token', undefined);
   next();
 });
 

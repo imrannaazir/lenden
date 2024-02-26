@@ -29,19 +29,20 @@ export const verifyPin = async (plainPin: string, hashedPin: string) => {
 };
 
 // create token
-export const createToken = async (
+export const createToken = (
   payload: JwtPayload,
   select: string,
   expiresIn: string,
 ) => {
+  return jwt.sign(payload, select, {
+    expiresIn,
+  });
+};
+
+export const verifyToken = async (token: string, secret: string) => {
   try {
-    return await jwt.sign(payload, select, {
-      expiresIn,
-    });
+    return (await jwt.verify(token, secret)) as JwtPayload;
   } catch (error) {
-    throw new AppError(
-      StatusCodes.INTERNAL_SERVER_ERROR,
-      'Could not create token.',
-    );
+    return null;
   }
 };

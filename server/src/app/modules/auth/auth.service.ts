@@ -2,7 +2,7 @@ import { StatusCodes } from 'http-status-codes';
 import AppError from '../../errors/AppError';
 import { TUser } from '../user/user.interface';
 import User from '../user/user.model';
-import { createToken, verifyPin } from './auth.utils';
+import { createToken, verifyPin, verifyToken } from './auth.utils';
 import config from '../../config';
 import { TLoginUser } from './auth.interface';
 
@@ -67,31 +67,32 @@ const registerUser = async (payload: TUser) => {
     payload.status = 'active';
     payload.balance = 40;
   }
-
-  // create user
-  const result = await User.create(payload);
-
-  if (!result) {
-    throw new AppError(StatusCodes.BAD_REQUEST, 'Failed to create account.');
-  }
-
   // create access token
   const jwtPayload = {
     mobileNumber,
     role: payload.role,
   };
-  const accessToken = await createToken(
+  const accessToken = createToken(
     jwtPayload,
     config.access_secret as string,
     config.access_token_expires_in as string,
   );
 
   // create refresh token
-  const refreshToken = await createToken(
+  const refreshToken = createToken(
     jwtPayload,
     config.refresh_secret as string,
     config.refresh_token_expires_in as string,
   );
+
+  // add token in user data
+  payload.token = refreshToken;
+  // create user
+  const result = await User.create(payload);
+
+  if (!result) {
+    throw new AppError(StatusCodes.BAD_REQUEST, 'Failed to create account.');
+  }
 
   return {
     accessToken,
@@ -114,7 +115,7 @@ const loginUser = async (payload: TLoginUser) => {
       { email: mobileNumberOrEmail },
       { mobileNumber: mobileNumberOrEmail },
     ],
-  }).select('+pin');
+  }).select('+pin +token');
 
   if (!isUserExist) {
     throw new AppError(
@@ -133,23 +134,46 @@ const loginUser = async (payload: TLoginUser) => {
     );
   }
 
+  if (isUserExist.token) {
+    const decodedToken = await verifyToken(
+      isUserExist.token,
+      config.refresh_secret as string,
+    );
+
+    if (decodedToken) {
+      throw new AppError(
+        StatusCodes.FORBIDDEN,
+        'An account is not allowed to login more than 1 device.',
+      );
+    }
+  }
+
   // create access token
   const jwtPayload = {
     mobileNumber: isUserExist.mobileNumber,
     role: isUserExist.role,
   };
-  const accessToken = await createToken(
+  const accessToken = createToken(
     jwtPayload,
     config.access_secret as string,
     config.access_token_expires_in as string,
   );
 
   // create refresh token
-  const refreshToken = await createToken(
+  const refreshToken = createToken(
     jwtPayload,
     config.refresh_secret as string,
     config.refresh_token_expires_in as string,
   );
+
+  // update token
+  const result = await User.findByIdAndUpdate(isUserExist._id, {
+    token: refreshToken,
+  });
+
+  if (!result) {
+    throw new AppError(StatusCodes.BAD_REQUEST, 'Failed to log in.');
+  }
 
   return {
     accessToken,

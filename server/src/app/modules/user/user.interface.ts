@@ -16,4 +16,5 @@ export type TUser = {
   role: TRole;
   nidNumber: string;
   balance: number;
+  token?: string;
 };
