@@ -11,7 +11,7 @@ export const registrationValidationSchema = z.object({
     mobileNumber: z.string(),
     role: z.enum(UserRole),
     pin: z.string().length(5),
-    nidNumber: z.number(),
+    nidNumber: z.string().length(15),
     name: userNameValidationSchema,
   }),
 });

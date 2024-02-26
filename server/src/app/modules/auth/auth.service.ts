@@ -11,37 +11,10 @@ const registerUser = async (payload: TUser) => {
 2. check already have a user with mobile number
 3. check already have a user with nid number
 */
-
-  // check is already have a user by email
-  const isAlreadyUserExistByEmail = await User.findOne({ email });
-  if (isAlreadyUserExistByEmail) {
-    throw new AppError(
-      StatusCodes.CONFLICT,
-      'Already have an account by this email.',
-    );
-  }
-  // check is already have a user by mobile number
-  const isAlreadyUserExistByMobileNumber = await User.findOne({ mobileNumber });
-  if (isAlreadyUserExistByMobileNumber) {
-    if (isAlreadyUserExistByMobileNumber) {
-      throw new AppError(
-        StatusCodes.CONFLICT,
-        'Already have an account by this mobile number.',
-      );
-    }
-  }
-
-  // check is already have an account by nid number
-  const isAlreadyUserExistByNid = await User.findOne({ nidNumber });
-  if (isAlreadyUserExistByNid) {
-    throw new AppError(
-      StatusCodes.CONFLICT,
-      'Already have an account by this nid number.',
-    );
-  }
+  const result = User.create(payload);
 
   // create user
-  const result = User.create(payload);
+
   return result;
 };
 

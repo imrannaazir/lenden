@@ -3,16 +3,21 @@ import { TUser, TUserName } from './user.interface';
 import { UserRole } from './user.constant';
 import { hashPin } from '../auth/auth.utils';
 
-const userNameSchema = new Schema<TUserName>({
-  firstName: {
-    type: String,
-    required: true,
+const userNameSchema = new Schema<TUserName>(
+  {
+    firstName: {
+      type: String,
+      required: true,
+    },
+    lastName: {
+      type: String,
+      required: true,
+    },
   },
-  lastName: {
-    type: String,
-    required: true,
+  {
+    _id: false,
   },
-});
+);
 const userSchema = new Schema<TUser>(
   {
     name: userNameSchema,
@@ -27,7 +32,7 @@ const userSchema = new Schema<TUser>(
       unique: true,
     },
     nidNumber: {
-      type: Number,
+      type: String,
       required: true,
       unique: true,
     },
@@ -50,6 +55,12 @@ const userSchema = new Schema<TUser>(
 // bcrypt the pin
 userSchema.pre('save', async function (next) {
   this.pin = (await hashPin(this.pin)) as string;
+  next();
+});
+
+// discontinue pin
+userSchema.post('save', async function (doc, next) {
+  doc.set('pin', undefined);
   next();
 });
 

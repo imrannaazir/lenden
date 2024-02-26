@@ -11,5 +11,5 @@ export type TUser = {
   mobileNumber: string;
   email: string;
   role: TRole;
-  nidNumber: number;
+  nidNumber: string;
 };
