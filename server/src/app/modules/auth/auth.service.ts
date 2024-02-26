@@ -181,9 +181,29 @@ const loginUser = async (payload: TLoginUser) => {
   };
 };
 
+// logout user
+const logoutUser = async (mobileNumber: string) => {
+  // check user is exist
+  const isUserExist = await User.findOne({ mobileNumber });
+  if (!isUserExist) {
+    throw new AppError(StatusCodes.UNAUTHORIZED, 'Account not founded.');
+  }
+
+  // update user
+  const result = await User.findByIdAndUpdate(isUserExist._id, {
+    token: '',
+  });
+
+  if (!result) {
+    throw new AppError(StatusCodes.BAD_REQUEST, 'Failed to logout.');
+  }
+  return null;
+};
+
 const AuthService = {
   registerUser,
   loginUser,
+  logoutUser,
 };
 
 export default AuthService;

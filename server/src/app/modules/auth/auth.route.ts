@@ -20,5 +20,8 @@ router.post(
   validateRequest(loginValidationSchema),
   AuthController.loginUser,
 );
+
+// logout user : PATCH
+router.patch('/logout', AuthController.logoutUser);
 const AuthRoute = router;
 export default AuthRoute;
