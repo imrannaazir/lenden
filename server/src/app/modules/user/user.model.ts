@@ -1,6 +1,6 @@
 import { Schema, model } from 'mongoose';
 import { TUser, TUserName } from './user.interface';
-import { UserRole } from './user.constant';
+import { UserRole, UserStatus } from './user.constant';
 import { hashPin } from '../auth/auth.utils';
 
 const userNameSchema = new Schema<TUserName>(
@@ -45,6 +45,15 @@ const userSchema = new Schema<TUser>(
       type: String,
       required: true,
       select: 0,
+    },
+    status: {
+      type: String,
+      enum: UserStatus,
+      required: true,
+    },
+    balance: {
+      type: Number,
+      required: true,
     },
   },
   {
