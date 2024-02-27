@@ -32,8 +32,29 @@ const approveAgent = async (id: string) => {
   return result;
 };
 
+//block user
+const blockUser = async (id: string) => {
+  // check is user exist
+  const isUserExist = await User.findById(id);
+  if (!isUserExist) {
+    throw new AppError(StatusCodes.NOT_FOUND, 'User not founded.');
+  }
+
+  // block the user
+  const result = await User.findByIdAndUpdate(isUserExist._id, {
+    status: 'blocked',
+  });
+
+  if (!result) {
+    throw new AppError(StatusCodes.BAD_REQUEST, 'Failed to block the user.');
+  }
+
+  return result;
+};
+
 const UserService = {
   approveAgent,
+  blockUser,
 };
 
 export default UserService;
