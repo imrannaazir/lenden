@@ -38,12 +38,13 @@ const sendMoney = async (payload: {
   }
 
   // check receiver is exit
-  const isAgentExist = await User.findOne({
+  const isReceiverExist = await User.findOne({
     mobileNumber: receiver,
     role: 'user',
+    status: 'active',
   });
 
-  if (!isAgentExist) {
+  if (!isReceiverExist) {
     throw new AppError(StatusCodes.NOT_FOUND, 'Receiver account not founded.');
   }
 
@@ -84,8 +85,8 @@ const sendMoney = async (payload: {
 
     // add amount to receiver account
     await User.findByIdAndUpdate(
-      isAgentExist._id,
-      { balance: isAgentExist.balance + amount },
+      isReceiverExist._id,
+      { balance: isReceiverExist.balance + amount },
       { session, new: true },
     );
 
@@ -99,7 +100,7 @@ const sendMoney = async (payload: {
     const transactionPayload: TTransaction = {
       amount,
       fee,
-      receiver: isAgentExist._id,
+      receiver: isReceiverExist._id,
       sender: sender._id,
       total,
       transactionType: 'send-money',
@@ -158,12 +159,13 @@ const cashOut = async (payload: {
   }
 
   // check receiver agent is exit
-  const isAgentExist = await User.findOne({
+  const isReceiverExist = await User.findOne({
     mobileNumber: receiver,
     role: 'agent',
+    status: 'active',
   });
 
-  if (!isAgentExist) {
+  if (!isReceiverExist) {
     throw new AppError(StatusCodes.NOT_FOUND, 'Agent account not founded.');
   }
 
@@ -202,8 +204,8 @@ const cashOut = async (payload: {
 
     // add amount to agent account
     await User.findByIdAndUpdate(
-      isAgentExist._id,
-      { balance: isAgentExist.balance + amount + agentFee },
+      isReceiverExist._id,
+      { balance: isReceiverExist.balance + amount + agentFee },
       { session, new: true },
     );
 
@@ -217,7 +219,7 @@ const cashOut = async (payload: {
     const transactionPayload: TTransaction = {
       amount,
       fee,
-      receiver: isAgentExist._id,
+      receiver: isReceiverExist._id,
       sender: sender._id,
       total,
       transactionType: 'cash-out',
@@ -244,10 +246,114 @@ const cashOut = async (payload: {
   }
 };
 
-//
+//cash in
+const cashIn = async (payload: {
+  receiver: string;
+  amount: number;
+  mobileNumber: string;
+  pin: string;
+}) => {
+  const { amount, receiver, mobileNumber, pin } = payload;
+  /* 
+      1. check receiver is exist
+      2. check receiver is a user 
+      3. check minimum amount is 50 taka 
+      4. add money to user balance 
+      6. deduct fee from sender balance
+      7. create transaction
+      */
+
+  // sender
+  const sender = await User.findOne({ mobileNumber }).select('+pin');
+  if (!sender) {
+    throw new AppError(StatusCodes.NOT_FOUND, 'Sender account not founded.');
+  }
+
+  // verify pin
+  const isPinMatched = await verifyPin(pin, sender.pin);
+
+  if (!isPinMatched) {
+    throw new AppError(StatusCodes.UNAUTHORIZED, 'Pin is incorrect.');
+  }
+
+  // check receiver user is exit
+  const isReceiverExist = await User.findOne({
+    mobileNumber: receiver,
+    role: 'user',
+    status: 'active',
+  });
+
+  if (!isReceiverExist) {
+    throw new AppError(StatusCodes.NOT_FOUND, 'User account not founded.');
+  }
+
+  // check minimum amount is 50 tk
+  if (amount < 50) {
+    throw new AppError(
+      StatusCodes.BAD_REQUEST,
+      'You can not cash out less than 50 taka.',
+    );
+  }
+
+  // check is total is more than sender balance
+  if (amount > sender.balance) {
+    throw new AppError(StatusCodes.BAD_REQUEST, 'Insufficient balance.');
+  }
+  // transaction and rollback
+  const session = await startSession();
+
+  try {
+    session.startTransaction();
+
+    //deduct fee from sender balance
+    await User.findByIdAndUpdate(
+      sender?._id,
+      {
+        balance: sender?.balance - amount,
+      },
+      { session, new: true },
+    );
+
+    // add amount to agent account
+    await User.findByIdAndUpdate(
+      isReceiverExist._id,
+      { balance: isReceiverExist.balance + amount },
+      { session, new: true },
+    );
+
+    const transactionPayload: TTransaction = {
+      amount,
+      fee: 0,
+      receiver: isReceiverExist._id,
+      sender: sender._id,
+      total: amount,
+      transactionType: 'cash-in',
+    };
+
+    const result = await Transaction.create(transactionPayload);
+    if (!result) {
+      throw new AppError(
+        StatusCodes.BAD_REQUEST,
+        'Failed to complete cash in transaction.',
+      );
+    }
+    await session.commitTransaction();
+    await session.endSession();
+    return result;
+  } catch (error) {
+    await session.abortTransaction();
+    await session.endSession();
+
+    throw new AppError(
+      StatusCodes.BAD_REQUEST,
+      'Failed to complete cash in transaction.',
+    );
+  }
+};
 const TransactionService = {
   sendMoney,
   cashOut,
+  cashIn,
 };
 
 export default TransactionService;

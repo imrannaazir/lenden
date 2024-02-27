@@ -21,6 +21,14 @@ router.post(
   TransactionController.cashOut,
 );
 
+// cash in : POST : agent
+router.post(
+  '/cash-in',
+  auth('agent'),
+  validateRequest(transactionMoneyValidationSchema),
+  TransactionController.cashIn,
+);
+
 const TransactionRoute = router;
 
 export default TransactionRoute;
