@@ -3,8 +3,6 @@ import catchAsync from '../../utils/catchAsync';
 import sendResponse from '../../utils/sendResponse';
 import AuthService from './auth.service';
 import config from '../../config';
-import { verifyToken } from './auth.utils';
-import AppError from '../../errors/AppError';
 
 // register user
 const registerUser = catchAsync(async (req, res) => {
@@ -42,18 +40,7 @@ const loginUser = catchAsync(async (req, res) => {
 
 // logout user
 const logoutUser = catchAsync(async (req, res) => {
-  const decodedToken = await verifyToken(
-    req.cookies.refreshToken,
-    config.refresh_secret as string,
-  );
-
-  if (!decodedToken) {
-    throw new AppError(
-      StatusCodes.UNAUTHORIZED,
-      'You are unauthorized to logout.',
-    );
-  }
-  await AuthService.logoutUser(decodedToken.mobileNumber);
+  await AuthService.logoutUser(req.user.mobileNumber);
 
   res.cookie('refreshToken', '', {
     secure: config.NODE_ENV === 'development' ? true : false,

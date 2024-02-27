@@ -5,6 +5,7 @@ import {
   loginValidationSchema,
   registrationValidationSchema,
 } from './auth.validation';
+import auth from '../../middleware/auth';
 
 const router = Router();
 // register user : POST
@@ -22,6 +23,10 @@ router.post(
 );
 
 // logout user : PATCH
-router.patch('/logout', AuthController.logoutUser);
+router.patch(
+  '/logout',
+  auth('admin', 'agent', 'user'),
+  AuthController.logoutUser,
+);
 const AuthRoute = router;
 export default AuthRoute;
