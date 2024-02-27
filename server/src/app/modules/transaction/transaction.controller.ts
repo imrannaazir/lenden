@@ -8,6 +8,7 @@ const sendMoney = catchAsync(async (req, res) => {
   const payload = {
     amount: req.body.amount,
     receiver: req.body.receiver,
+    pin: req.body.pin,
     mobileNumber: req.user.mobileNumber,
   };
   const result = await TransactionService.sendMoney(payload);
@@ -19,9 +20,27 @@ const sendMoney = catchAsync(async (req, res) => {
     data: result,
   });
 });
+// cash out
+const cashOut = catchAsync(async (req, res) => {
+  const payload = {
+    amount: req.body.amount,
+    receiver: req.body.receiver,
+    pin: req.body.pin,
+    mobileNumber: req.user.mobileNumber,
+  };
+  const result = await TransactionService.cashOut(payload);
+
+  sendResponse(res, {
+    success: true,
+    statusCode: StatusCodes.CREATED,
+    message: 'cash out done.',
+    data: result,
+  });
+});
 
 const TransactionController = {
   sendMoney,
+  cashOut,
 };
 
 export default TransactionController;
