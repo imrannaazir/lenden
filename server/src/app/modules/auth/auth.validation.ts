@@ -22,3 +22,9 @@ export const loginValidationSchema = z.object({
     pin: z.string().length(5).trim(),
   }),
 });
+
+export const refreshTokenValidationSchema = z.object({
+  cookies: z.object({
+    refreshToken: z.string(),
+  }),
+});

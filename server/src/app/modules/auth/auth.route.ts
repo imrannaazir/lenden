@@ -3,6 +3,7 @@ import AuthController from './auth.controller';
 import validateRequest from '../../middleware/validateRequest';
 import {
   loginValidationSchema,
+  refreshTokenValidationSchema,
   registrationValidationSchema,
 } from './auth.validation';
 import auth from '../../middleware/auth';
@@ -20,6 +21,13 @@ router.post(
   '/login',
   validateRequest(loginValidationSchema),
   AuthController.loginUser,
+);
+
+// get refresh token
+router.post(
+  '/refresh-token',
+  validateRequest(refreshTokenValidationSchema),
+  AuthController.getRefreshToken,
 );
 
 // logout user : PATCH

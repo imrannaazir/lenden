@@ -181,6 +181,51 @@ const loginUser = async (payload: TLoginUser) => {
   };
 };
 
+// refresh token
+const getRefreshToken = async (token: string) => {
+  if (!token) {
+    throw new AppError(StatusCodes.UNAUTHORIZED, 'Token not sent.');
+  }
+
+  const decodedToken = await verifyToken(
+    token,
+    config.refresh_secret as string,
+  );
+  if (!decodedToken) {
+    throw new AppError(StatusCodes.UNAUTHORIZED, 'Unauthorized access.');
+  }
+
+  // check user exist
+  const isUserExist = await User.findOne({
+    mobileNumber: decodedToken.mobileNumber,
+  });
+
+  if (!isUserExist) {
+    throw new AppError(StatusCodes.UNAUTHORIZED, 'Account not founded.');
+  }
+
+  // check is account active
+  if (isUserExist.status !== 'active') {
+    throw new AppError(
+      StatusCodes.FORBIDDEN,
+      `Account is ${isUserExist.status}.`,
+    );
+  }
+  // create access token
+  const jwtPayload = {
+    mobileNumber: isUserExist.mobileNumber,
+    role: isUserExist.role,
+  };
+  const accessToken = createToken(
+    jwtPayload,
+    config.access_secret as string,
+    config.access_token_expires_in as string,
+  );
+  return {
+    accessToken,
+  };
+};
+
 // logout user
 const logoutUser = async (mobileNumber: string) => {
   // check user is exist
@@ -203,6 +248,7 @@ const logoutUser = async (mobileNumber: string) => {
 const AuthService = {
   registerUser,
   loginUser,
+  getRefreshToken,
   logoutUser,
 };
 

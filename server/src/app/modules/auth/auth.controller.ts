@@ -38,6 +38,21 @@ const loginUser = catchAsync(async (req, res) => {
   });
 });
 
+// get refresh token
+const getRefreshToken = catchAsync(async (req, res) => {
+  const { refreshToken } = req.cookies;
+  const { accessToken } = await AuthService.getRefreshToken(refreshToken);
+
+  sendResponse(res, {
+    success: true,
+    statusCode: StatusCodes.OK,
+    message: 'Access token retrieved.',
+    data: {
+      accessToken,
+    },
+  });
+});
+
 // logout user
 const logoutUser = catchAsync(async (req, res) => {
   await AuthService.logoutUser(req.user.mobileNumber);
@@ -53,9 +68,11 @@ const logoutUser = catchAsync(async (req, res) => {
     data: null,
   });
 });
+
 const AuthController = {
   registerUser,
   loginUser,
+  getRefreshToken,
   logoutUser,
 };
 export default AuthController;
