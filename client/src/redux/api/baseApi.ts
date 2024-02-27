@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { RootState } from "@/redux/store";
 import {
   BaseQueryApi,
   BaseQueryFn,
@@ -6,19 +7,19 @@ import {
   FetchArgs,
   createApi,
   fetchBaseQuery,
-} from "@reduxjs/toolkit/query";
-import { RootState } from "../store";
-import { login, logout } from "../features/auth/authSlice";
+} from "@reduxjs/toolkit/query/react";
+import { logIn, logOut } from "../features/auth/authSlice";
 
 const baseQuery = fetchBaseQuery({
-  baseUrl: import.meta.env.REACT_APP_API_URL,
-  credentials: "include",
+  baseUrl: import.meta.env.VITE_API_URL,
   prepareHeaders: (headers, { getState }) => {
     const token = (getState() as RootState).auth.token;
 
+    // If we have a token set in state, let's assume that we should be passing it.
     if (token) {
       headers.set("authorization", `${token}`);
     }
+
     return headers;
   },
 });
@@ -31,10 +32,13 @@ const baseQueryWithRefreshToken: BaseQueryFn<
   let result = await baseQuery(args, api, extraOptions);
 
   if (result?.error?.status === 401) {
-    const response = await fetch("http://localhost/api/v1/auth/refresh-token", {
-      method: "POST",
-      credentials: "include",
-    });
+    const response = await fetch(
+      `${import.meta.env.VITE_API_URL}/auth/refresh-token`,
+      {
+        method: "POST",
+        credentials: "include",
+      }
+    );
 
     const data = await response.json();
 
@@ -42,7 +46,7 @@ const baseQueryWithRefreshToken: BaseQueryFn<
       const user = (api.getState() as RootState).auth.user;
 
       api.dispatch(
-        login({
+        logIn({
           user,
           token: data?.data?.accessToken,
         })
@@ -50,7 +54,7 @@ const baseQueryWithRefreshToken: BaseQueryFn<
 
       result = await baseQuery(args, api, extraOptions);
     } else {
-      api.dispatch(logout());
+      api.dispatch(logOut());
     }
   }
 

@@ -4,10 +4,11 @@ import cookieParser from 'cookie-parser';
 import notFoundHandler from './app/middleware/notFoundHandler';
 import router from './app/routes';
 import globalErrorHandler from './app/middleware/globalErrorHandler';
+import config from './app/config';
 const app: Application = express();
 
 // parser
-app.use(cors());
+app.use(cors({ credentials: true, origin: [config.client_url as string] }));
 app.use(express.json());
 app.use(cookieParser());
 

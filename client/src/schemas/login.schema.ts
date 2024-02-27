@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export const loginFormSchema = z.object({
-  pin: z.string().length(5, {
+  pin: z.string().regex(/^\d{5}$/, {
     message: "Pin must be exact 5 digit number.",
   }),
   mobileNumberOrEmail: z
