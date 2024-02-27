@@ -52,9 +52,38 @@ const blockUser = async (id: string) => {
   return result;
 };
 
+// unblock the user
+const unblockUser = async (id: string) => {
+  // is user exist
+  const isUserExist = await User.findById(id);
+  if (!isUserExist) {
+    throw new AppError(StatusCodes.NOT_FOUND, 'User not founded.');
+  }
+
+  if (isUserExist.status !== 'blocked') {
+    throw new AppError(
+      StatusCodes.BAD_REQUEST,
+      `${isUserExist.role} is not blocked.`,
+    );
+  }
+
+  const result = await User.findByIdAndUpdate(isUserExist._id, {
+    status: 'active',
+  });
+
+  if (!result) {
+    throw new AppError(
+      StatusCodes.BAD_REQUEST,
+      `Failed to unblock the ${isUserExist.role}`,
+    );
+  }
+
+  return result;
+};
 const UserService = {
   approveAgent,
   blockUser,
+  unblockUser,
 };
 
 export default UserService;

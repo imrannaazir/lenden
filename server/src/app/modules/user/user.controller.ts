@@ -32,5 +32,20 @@ const blockUser = catchAsync(async (req, res) => {
   });
 });
 
-const UserController = { approveAgent, blockUser };
+// unblock user
+const unblockUser = catchAsync(async (req, res) => {
+  const id = req.params.id;
+  const result = await UserService.unblockUser(id);
+
+  sendResponse(res, {
+    success: true,
+    statusCode: StatusCodes.OK,
+    message: `${result.role} has been unblocked successfully.`,
+    data: {
+      unblockUserMobileNumber: result.mobileNumber,
+    },
+  });
+});
+
+const UserController = { approveAgent, blockUser, unblockUser };
 export default UserController;
