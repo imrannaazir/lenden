@@ -80,10 +80,26 @@ const unblockUser = async (id: string) => {
 
   return result;
 };
+
+// get balance
+const getBalance = async (mobileNumber: string, role: string) => {
+  const isUserExist = await User.findOne({
+    mobileNumber,
+    role,
+  });
+
+  if (!isUserExist) {
+    throw new AppError(StatusCodes.FORBIDDEN, "You haven't access.");
+  }
+  if (isUserExist.role !== 'admin') {
+    return { balance: isUserExist.balance };
+  }
+};
 const UserService = {
   approveAgent,
   blockUser,
   unblockUser,
+  getBalance,
 };
 
 export default UserService;

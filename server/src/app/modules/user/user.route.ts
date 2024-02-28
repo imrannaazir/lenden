@@ -13,5 +13,11 @@ router.patch('/block-user/:id', auth('admin'), UserController.blockUser);
 // unblock user
 router.patch('/unblock-user/:id', auth('admin'), UserController.unblockUser);
 
+//get balance
+router.get(
+  '/get-balance',
+  auth('admin', 'agent', 'user'),
+  UserController.getBalance,
+);
 const UserRoute = router;
 export default UserRoute;

@@ -47,5 +47,17 @@ const unblockUser = catchAsync(async (req, res) => {
   });
 });
 
-const UserController = { approveAgent, blockUser, unblockUser };
+// get balance
+const getBalance = catchAsync(async (req, res) => {
+  const { role, mobileNumber } = req.user;
+  const result = await UserService.getBalance(mobileNumber, role);
+
+  sendResponse(res, {
+    success: true,
+    statusCode: StatusCodes.OK,
+    message: 'Balance retrieved successfully.',
+    data: result,
+  });
+});
+const UserController = { approveAgent, blockUser, unblockUser, getBalance };
 export default UserController;
