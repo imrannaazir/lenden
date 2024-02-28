@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -27,8 +28,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../ui/select";
+import { toast } from "sonner";
+import { logIn } from "@/redux/features/auth/authSlice";
+import { jwtDecode } from "jwt-decode";
+import { useAppDispatch } from "@/redux/hooks";
+import { useNavigate } from "react-router-dom";
+import { useRegisterMutation } from "@/redux/features/auth/authApi";
 
 export function RegistrationForm() {
+  const dispatch = useAppDispatch();
+  const navigate = useNavigate();
+  const [register] = useRegisterMutation();
+
   // 1. Define your form.
   const form = useForm<z.infer<typeof registrationFormSchema>>({
     resolver: zodResolver(registrationFormSchema),
@@ -38,8 +49,45 @@ export function RegistrationForm() {
   });
 
   // 2. Define a submit handler.
-  function onSubmit(values: z.infer<typeof registrationFormSchema>) {
-    console.log(values);
+  async function onSubmit(data: z.infer<typeof registrationFormSchema>) {
+    const { pin, role, nidNumber, mobileNumber, email } = data;
+    const payload = {
+      name: {
+        firstName: data.firstName,
+        lastName: data.lastName,
+      },
+      pin,
+      role,
+      nidNumber,
+      mobileNumber,
+      email,
+    };
+
+    const toastId = toast.loading("Signing up.", { duration: 2000 });
+    try {
+      const response = await register(payload).unwrap();
+
+      if (response.data.accessToken) {
+        dispatch(
+          logIn({
+            token: response.data.accessToken,
+            user: jwtDecode(response.data.accessToken),
+          })
+        );
+      }
+
+      toast.success("Signed up successfully.", { id: toastId });
+      navigate("/");
+    } catch (error: any) {
+      const { message } = error.data.errorSources[0];
+      console.log(error);
+
+      if (message) {
+        toast.error(message, { id: toastId });
+      } else {
+        toast.error("Failed to sign up.", { id: toastId });
+      }
+    }
   }
 
   return (

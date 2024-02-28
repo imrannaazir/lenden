@@ -46,7 +46,6 @@ export function LoginForm() {
     const toastId = toast.loading("Logging in.", { duration: 2000 });
     try {
       const response = await login(data).unwrap();
-      console.log(response.data.accessToken);
 
       if (response.data.accessToken) {
         dispatch(
